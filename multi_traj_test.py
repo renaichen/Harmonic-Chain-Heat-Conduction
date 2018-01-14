@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from multiprocessing import Pool
+import time 
 
 
 def accel_update(x, v, m, omega, dt, xil, xir):
@@ -89,6 +90,8 @@ def single_trajectory(n):
 
 if __name__ == '__main__':
 
+    start_time = time.time()
+    
     N = 2
     mass = np.array([1.0, 1.0])
     freq = np.array([0.0, 1.0, 0.0])
@@ -126,6 +129,8 @@ if __name__ == '__main__':
 
     p.close()
     p.join()
+    
+    print("This run uses %s seconds " % (time.time() - start_time))
 
     # plt.figure(1)
     # plt.plot(t_array, v_t[0, :])
@@ -136,8 +141,8 @@ if __name__ == '__main__':
     # plt.figure(3)
     # plt.plot(t_array, k_t_tot)
 
-    plt.figure(5)
-    plt.plot(t_array, u_t_tot/traj)
+    #plt.figure(5)
+    #plt.plot(t_array, u_t_tot/traj)
 
 
-    plt.show()
+    #plt.show()
