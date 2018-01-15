@@ -1,9 +1,9 @@
-
+import os
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import random
 from multiprocessing import Pool
-import time 
+import time
 
 
 def accel_update(x, v, m, omega, dt, xil, xir):
@@ -83,7 +83,7 @@ def single_trajectory(n):
         qr_sum += qr_t_instant[i + 1]
         qr_t_accu[i + 1] = qr_sum
 
-        print(i)
+      #  print(i)
 
     return x_t, v_t, k_t_tot, u_t_tot, ql_t_instant, qr_t_instant, ql_t_accu, qr_t_accu
 
@@ -91,7 +91,7 @@ def single_trajectory(n):
 if __name__ == '__main__':
 
     start_time = time.time()
-    
+
     N = 2
     mass = np.array([1.0, 1.0])
     freq = np.array([0.0, 1.0, 0.0])
@@ -101,8 +101,8 @@ if __name__ == '__main__':
     gammar = 100.0
     gammal = 100.0
 
-    traj = 1000
-    t_end = 100
+    traj = 100
+    t_end = 1000
     deltat = 0.01
     t_array = np.arange(0, t_end, deltat)
     t_size = t_array.size
@@ -127,10 +127,12 @@ if __name__ == '__main__':
         ql_t_accu += ql_accu
         qr_t_accu += qr_accu
 
+        print os.getpid()
+
     p.close()
     p.join()
-    
-    print("This run uses %s seconds " % (time.time() - start_time))
+
+    print "This run uses %s seconds " % (time.time() - start_time)
 
     # plt.figure(1)
     # plt.plot(t_array, v_t[0, :])
