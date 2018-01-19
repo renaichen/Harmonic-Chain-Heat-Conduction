@@ -135,7 +135,9 @@ if __name__ == '__main__':
     p.close()
     p.join()
 
-    print ("This run uses %s seconds " % (time.time() - start_time))
+    with open ("time-spent.txt","w") as outputfile:
+        outputfile.write("This run uses seconds {} ".format(time.time() - start_time))
+    #print ("This run uses %s seconds " % (time.time() - start_time))
 
     # plt.figure(1)
     # plt.plot(t_array, v_t[0, :])
