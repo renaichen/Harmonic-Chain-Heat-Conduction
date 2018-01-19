@@ -90,6 +90,8 @@ def single_trajectory(n):
 
 if __name__ == '__main__':
 
+    SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
+
     start_time = time.time()
 
     N = 2
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     gammar = 100.0
     gammal = 100.0
 
-    traj = 100
+    traj = 1000
     t_end = 1000
     deltat = 0.01
     t_array = np.arange(0, t_end, deltat)
@@ -116,7 +118,8 @@ if __name__ == '__main__':
     ql_t_accu = np.zeros(t_size)
     qr_t_accu = np.zeros(t_size)
 
-    p = Pool()
+    p = Pool(processes=SLOTS)# pass the number of core to the Pool so that I know how many cores I can use.
+
     for x, v, k_tot, u_tot, ql_instant, qr_instant, ql_accu, qr_accu in p.map(single_trajectory, range(traj)):
         x_t += x
         v_t += v
@@ -127,12 +130,12 @@ if __name__ == '__main__':
         ql_t_accu += ql_accu
         qr_t_accu += qr_accu
 
-        print os.getpid()
+    #    print os.getpid()
 
     p.close()
     p.join()
 
-    print "This run uses %s seconds " % (time.time() - start_time)
+    print ("This run uses %s seconds " % (time.time() - start_time))
 
     # plt.figure(1)
     # plt.plot(t_array, v_t[0, :])
