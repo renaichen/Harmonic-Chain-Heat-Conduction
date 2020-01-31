@@ -48,10 +48,23 @@ def heat_update(vprev, vnow, m, dt):
     return ql, qr
 
 
+def heat_inter_update(x, K, v):
+    """return an array of 1D interatomic heat currents"""
+    x_forward = np.roll(x, 1)  # push the position list a step forward, now it can be treated as x_{n-1}
+    fij = - K[:-1] * (x - x_forward)
+    # the first element K_10 is not a part of the formula to be left out
+    fij[0] = 0
+    v_forward = np.roll(v, 1)
+    return 0.5 * fij * (v + v_forward)  # again the first element needs not taken into account
+
+
 def kinetic_update(m, v):
-    k = 0.5 * m * v ** 2
+    k = m * v ** 2
     return np.sum(k)
 
+
+def temperature_update(m, v):
+    return m * v ** 2 / kb
 
 def potential_update(m, x, omega):
     x_backward = np.roll(x, -1)  # push the position list a step backward, now it can be treated as x_{n+1}
@@ -62,18 +75,20 @@ def potential_update(m, x, omega):
 
 N = 2
 mass = np.array([1.0, 1.0])
-force_constants = np.array([0.0, 0.5, 0.0])
+force_constants = np.array([0.0, 1., 0.0])
+# N = 3
+# mass = np.array([1.0, 1.0, 1.0])
+# force_constants = np.array([0.0, 0.5, 0.5, 0.0])
 
 kb = 1.0
-templ = 0.001
-tempr = 0.002
+templ = 0.01
+tempr = 0.02
 gammal = 0.1
 gammar = 0.1
 # Teff = 1.
 # Teff = (templ + tempr) / 2.
 Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
-
-tEnd = 100
+tEnd = 1000
 deltat = 0.001
 t_array = np.arange(0, tEnd, deltat)
 t_size = t_array.size
@@ -89,10 +104,12 @@ ql_t_accu = np.zeros(t_size)
 qr_t_accu = np.zeros(t_size)
 k_t_tot = np.zeros(t_size)
 u_t_tot = np.zeros(t_size)
+temperature_change = np.zeros((N, t_size))
 
 # x_t[0, 0] = 0.1
 ql_sum = 0.0
 qr_sum = 0.0
+j12 = 0.0
 
 for i in range(t_size - 1):
     xil = random.gauss(0, 1)
@@ -109,16 +126,20 @@ for i in range(t_size - 1):
         ql_t_accu[i + 1] = ql_sum
         qr_sum += qr_t_instant[i + 1]
         qr_t_accu[i + 1] = qr_sum
+        j12 += heat_inter_update(x_t[:, i], force_constants, v_t[:, i])[1]
+        temperature_change[:, i] = temperature_update(mass, v_t[:, i])
 
     print(i)
 print(ql_sum)
 print(qr_sum)
 # print(np.sum(ql_t_accu[-1]))
 # print(np.sum(qr_t_accu[-1]))
+print(j12)
+print(np.mean(temperature_change, axis=1))
 
-# plt.figure(1)
-# plt.plot(t_array, x_t[0, :])
-# plt.plot(t_array, x_t[1, :])
+plt.figure(1)
+plt.plot(t_array, x_t[0, :])
+plt.plot(t_array, x_t[1, :])
 # plt.plot(t_array, x_t[0, :] + x_t[1, :])
 # plt.plot(t_array, v_t[0, :])
 # plt.plot(t_array, v_t[1, :])
@@ -132,6 +153,6 @@ plt.plot(t_array, qr_t_accu)
 # plt.plot(t_array, k_t_tot + u_t_tot)
 #
 plt.figure(4)
-plt.plot(t_array, u_t_tot)
+plt.plot(t_array, temperature_change[1, :])
 
-plt.show()
+# plt.show()
