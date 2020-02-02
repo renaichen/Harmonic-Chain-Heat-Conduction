@@ -84,7 +84,8 @@ def single_trajectory(n):
     v_n_old = np.zeros(N)
     a_n_old = np.zeros(N)
     x_n_new = np.zeros(N)
-    v_n_new = np.zeros(N)
+    # v_n_new = np.zeros(N)
+    v_n_new = np.sqrt(kb*Teff/mass)*np.random.normal(0, 1, N)
     a_n_new = np.zeros(N)
     powerL = 0.0
     powerR = 0.0
@@ -212,7 +213,16 @@ if __name__ == '__main__':
     print('heatR = ', JRaver, JRstd)
     #----------------
 
-    with open ("time-spent.txt","w") as outputfile:
-        outputfile.write("This run uses seconds {} ".format(time.time() - start_time))
+    with open (str(traj) + "traj-" +str(tEnd) + "EndTime-" + time.strftime('-%m%d-%H%M%S.txt'),"w") as outputfile:
+        outputfile.write("This run uses mins {} \n".format((time.time() - \
+            start_time)/60))
+        outputfile.write("gammal = {} \n".format(gammal))
+        outputfile.write("gammar = {} \n".format(gammar))
+        outputfile.write("time step = {} \n".format(deltat))
+        outputfile.write("T = {}, Tstd = {} \n".format(Taver, Tstd))
+        outputfile.write("heatL = {}, heatLstd = {} \n".format(JLaver, JLstd))
+        outputfile.write("heat12 = {}, heat12std = {} \n".format(J12aver, J12std))
+        outputfile.write("heatR = {}, heatRstd = {} \n".format(JRaver, JRstd))
+
 
 
