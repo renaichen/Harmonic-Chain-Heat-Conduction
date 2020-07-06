@@ -137,7 +137,7 @@ def single_trajectory(n):
 
 if __name__ == '__main__':
 
-    traj = 2
+    traj = 20
     SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
     start_time = time.time()
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     # force_constants = np.array([0.0, 0.5, 0.5, 0.5, 0.5, 0.0])
 
     N = 5
-    mass = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
+    mass = np.array([10.0, 10.0, 10.0, 10.0, 10.0])
     ## with C-C single bond being ~290000 kJ mol^-1 nm^-2
     force_constants = np.array([0.0, 10000, 10000, 10000, 10000, 0.0])
 
@@ -159,12 +159,12 @@ if __name__ == '__main__':
     kb = 8.314e-3 # kJ mol^-1 K^-1
     templ = 100 # in K
     tempr = 100
-    gammal = 0.0 # in ps^-1
+    gammal = 1.0 # in ps^-1
     gammar = 0.0
-    Teff = 1.
+    # Teff = 1.
     # Teff = (templ + tempr) / 2.
-    # Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
-    tEnd = 1e2
+    Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
+    tEnd = 1e6
     deltat = 0.001
     t_array = np.arange(0, tEnd, deltat)
     sample_interval = 1000
@@ -179,8 +179,8 @@ if __name__ == '__main__':
     temperaturetraj = np.zeros((N, traj))
 
     # ##--only when necessary to investigate the trajectories
-    dirc = './atom_number' + str(N) + '/'
-    os.makedirs(os.path.dirname(dirc))
+    # dirc = './atom_number' + str(N) + '/'
+    # os.makedirs(os.path.dirname(dirc))
 
     p = Pool(processes=SLOTS)# pass the number of core to the Pool so that I know how many cores I can use.
     i = 0
@@ -197,10 +197,10 @@ if __name__ == '__main__':
         vel = v_t
 
         ##--only when necessary to investigate the trajectories
-        filename = './atom_number' + str(N) + '/' + 'position-' + str(i) + '.txt'
-        np.savetxt(filename, x_t)
-        filename = './atom_number' + str(N) + '/' + 'velocity-' + str(i) + '.txt'
-        np.savetxt(filename, v_t)
+        # filename = './atom_number' + str(N) + '/' + 'position-' + str(i) + '.txt'
+        # np.savetxt(filename, x_t)
+        # filename = './atom_number' + str(N) + '/' + 'velocity-' + str(i) + '.txt'
+        # np.savetxt(filename, v_t)
 
         i += 1
 
