@@ -119,7 +119,7 @@ def single_trajectory(n):
         a_n_old = a_n_new
         x_n_new, v_n_new, a_n_new = (vv_update(x_n_old,v_n_old, a_n_old, mass,
                                                 force_constants, deltat,xil, xir))
-        x_n_new = apply_periodic(x_n_new, N-1, amp, omega_drive, tstep*deltat)
+        # x_n_new = apply_periodic(x_n_new, N-1, amp, omega_drive, tstep*deltat)
 
         if tstep > half_tsize:
             powerLtemp, powerRtemp = heat_update(v_n_old, v_n_new, mass, deltat, xil, xir)
@@ -137,29 +137,34 @@ def single_trajectory(n):
 
 if __name__ == '__main__':
 
-    traj = 10
+    traj = 20
     SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
     start_time = time.time()
 
-    N = 2
-    mass = np.array([1.0, 1.0])
-    force_constants = np.array([0.0, 1., 0.0])
+    # N = 2
+    # mass = np.array([1.0, 1.0])
+    # force_constants = np.array([0.0, 1., 0.0])
     # N = 5
     # mass = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
     # force_constants = np.array([0.0, 0.5, 0.5, 0.5, 0.5, 0.0])
 
-    amp = 0.01
-    omega_drive = 0.1
+    N = 5
+    mass = np.array([10.0, 10.0, 10.0, 10.0, 10.0])
+    ## with C-C single bond being ~290000 kJ mol^-1 nm^-2
+    force_constants = np.array([0.0, 10000, 10000, 10000, 10000, 0.0])
 
-    kb = 1.0
-    templ = 0.01
-    tempr = 0.02
-    gammal = 1.1
-    gammar = 1.1
+    # amp = 0.01
+    # omega_drive = 0.1
+
+    kb = 8.314e-3 # kJ mol^-1 K^-1
+    templ = 150 # in K
+    tempr = 100
+    gammal = 1.0 # in ps^-1
+    gammar = 1.0
     # Teff = 1.
     # Teff = (templ + tempr) / 2.
     Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
-    tEnd = 1e2
+    tEnd = 1e6
     deltat = 0.001
     t_array = np.arange(0, tEnd, deltat)
     sample_interval = 1000
@@ -173,7 +178,7 @@ if __name__ == '__main__':
     power12traj = np.zeros(traj)
     temperaturetraj = np.zeros((N, traj))
 
-    # # ##--only when necessary to investigate the trajectories
+    # ##--only when necessary to investigate the trajectories
     # dirc = './atom_number' + str(N) + '/'
     # os.makedirs(os.path.dirname(dirc))
 
@@ -191,7 +196,7 @@ if __name__ == '__main__':
         pos = x_t
         vel = v_t
 
-        # ##--only when necessary to investigate the trajectories
+        ##--only when necessary to investigate the trajectories
         # filename = './atom_number' + str(N) + '/' + 'position-' + str(i) + '.txt'
         # np.savetxt(filename, x_t)
         # filename = './atom_number' + str(N) + '/' + 'velocity-' + str(i) + '.txt'
