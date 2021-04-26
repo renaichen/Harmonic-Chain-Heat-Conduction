@@ -1,0 +1,10 @@
+This run uses mins 51.85288443962733 
+amplitude = 0.1 
+omega drive = 5.0 
+gammal = 1.0 
+gammar = 1.0 
+time step = 0.001 
+T = [ 0.27231639  0.15411482  0.02878002  0.0140855   0.9076848 ], Tstd = [ 0.  0.  0.  0.  0.] 
+heatL = -0.2723147001283336, heatLstd = 0.0 
+heat12 = -0.27241368046683473, heat12std = 0.0 
+heatR = -0.9076791919097874, heatRstd = 0.0 

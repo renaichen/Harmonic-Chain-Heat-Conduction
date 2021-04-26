@@ -1,0 +1,7 @@
+This run uses mins 556.9878903826078 
+gammal = 0 
+gammar = 0.1 
+time step = 0.001 
+mode number = 5000 
+omegaN = 62.83185307179586 
+Eeq = [ 0.30147321] 

@@ -1,0 +1,8 @@
+This run uses mins 21.452005279064178 
+gammal = 1.1 
+gammar = 0.0 
+time step = 0.001 
+T = [  4.12508822e-07   9.10942091e-07], Tstd = [ 0.  0.] 
+heatL = -4.5375963071104037e-07, heatLstd = 5.293955920339377e-23 
+heat12 = -2.268839220033931e-07, heat12std = 0.0 
+heatR = 0.0, heatRstd = 0.0 
