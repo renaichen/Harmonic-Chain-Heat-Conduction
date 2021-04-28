@@ -34,7 +34,7 @@ def accel_damp_update(v):
 #     return fluctuation
 
 
-def accel_fluct_update(m, dt, xil, xir,tstep, phin_l, phin_r, Teff_list_l,
+def accel_fluct_update(m, dt, tstep, phin_l, phin_r, Teff_list_l,
         Teff_list_r):
     fluctuation = np.zeros(len(m))
     Rn_l = 2 * np.sqrt(kb * gammar * Teff_list_l * deltaomega / (np.pi * m[0])) * np.cos(omegan * dt * tstep + phin_l)
@@ -45,12 +45,12 @@ def accel_fluct_update(m, dt, xil, xir,tstep, phin_l, phin_r, Teff_list_l,
     return fluctuation
 
 
-def vv_update(xprev, vprev, acc_determine_prev, m, K, dt, xil, xir,tstep, phin_l, phin_r, Teff_list_l,
+def vv_update(xprev, vprev, acc_determine_prev, m, K, dt, tstep, phin_l, phin_r, Teff_list_l,
         Teff_list_r):
     x = xprev + vprev * dt + 0.5 * acc_determine_prev * dt ** 2
     a_determine_new = accel_determine_update(x, m, K, dt)
     a_damp = accel_damp_update(vprev)
-    a_fluct = accel_fluct_update(m, dt, xil, xir, tstep, phin_l, phin_r, Teff_list_l,
+    a_fluct = accel_fluct_update(m, dt, tstep, phin_l, phin_r, Teff_list_l,
         Teff_list_r)
     v = vprev + 0.5 * (acc_determine_prev + a_determine_new) * dt \
         + a_damp * dt + a_fluct * dt
@@ -67,7 +67,7 @@ def vv_update(xprev, vprev, acc_determine_prev, m, K, dt, xil, xir,tstep, phin_l
 #     return ql, qr
 
 
-def heat_update(vprev, vnow, dt, fluct):
+def heat_update(vprev, vnow, m, dt, fluct):
     aver_vleft = 0.5 * (vprev[0] + vnow[0])
     aver_vright = 0.5 * (vprev[-1] + vnow[-1])
     ql = -gammal * m[0] *vprev[0] * aver_vleft  \
@@ -121,6 +121,7 @@ def single_trajectory(n):
     a_n_old = np.zeros(N)
     x_n_new = np.zeros(N)
     # v_n_new = np.zeros(N)
+    Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
     v_n_new = np.sqrt(kb*Teff/mass)*np.random.normal(0, 1, N)
     a_n_new = np.zeros(N)
     powerL = 0.0
@@ -141,8 +142,8 @@ def single_trajectory(n):
             t_dis = np.append(t_dis, deltat * tstep)
 
 
-        xil = random.gauss(0, 1)
-        xir = random.gauss(0, 1)
+        # xil = random.gauss(0, 1)
+        # xir = random.gauss(0, 1)
 
         x_n_old = x_n_new
         v_n_old = v_n_new
@@ -150,12 +151,12 @@ def single_trajectory(n):
         # x_n_new, v_n_new, a_n_new = (vv_update(x_n_old,v_n_old, a_n_old, mass,
         #                                         force_constants, deltat,xil, xir,tstep))
         x_n_new, v_n_new, a_n_new = (vv_update(x_n_old,v_n_old, a_n_old, mass,
-                                                force_constants, deltat,xil, xir,tstep, phin_l, phin_r, Teff_list_l, Teff_list_r))
+                                                force_constants, deltat, tstep, phin_l, phin_r, Teff_list_l, Teff_list_r))
 
         if tstep > half_tsize:
-            fluct = accel_fluct_update(mass, dt, xil, xir, tstep, phin_l, phin_r, Teff_list_l,
+            fluct = accel_fluct_update(mass, deltat, tstep, phin_l, phin_r, Teff_list_l,
         Teff_list_r)
-            powerLtemp, powerRtemp = heat_update(v_n_old, v_n_new, deltat, fluct)
+            powerLtemp, powerRtemp = heat_update(v_n_old, v_n_new, mass, deltat, fluct)
             powerL += powerLtemp
             powerR += powerRtemp
             power12 += heat_inter_update(x_n_new, force_constants, v_n_new)[1]
@@ -188,14 +189,11 @@ if __name__ == '__main__':
 
     kb = 0.008314 # for kj/(mol K) [GROMACS]
     hbar = 0.06347
-    templ = 3000
-    tempr = 3050
+    templ = 300
+    tempr = 350
     gammal = 1.0
     gammar = 1.0
-    # Teff = 1.
-    # Teff = (templ + tempr) / 2.
-    Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
-    tEnd = 1e3
+    tEnd = 1e1
     deltat = 0.001
     t_array = np.arange(0, tEnd, deltat)
     sample_interval = 1000
