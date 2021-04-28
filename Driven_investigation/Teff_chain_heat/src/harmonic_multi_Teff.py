@@ -34,33 +34,46 @@ def accel_damp_update(v):
 #     return fluctuation
 
 
-def accel_fluct_update(m, dt, xil, xir,tstep):
+def accel_fluct_update(m, dt, xil, xir,tstep, phin_l, phin_r, Teff_list_l,
+        Teff_list_r):
     fluctuation = np.zeros(len(m))
-    Rn_l = 2 * np.sqrt(gammar * Teff_list_l * deltaomega / np.pi) * np.cos(omegan * dt * tstep + phin_l)
-    Rn_r = 2 * np.sqrt(gammar * Teff_list_r * deltaomega / np.pi) * np.cos(omegan * dt * tstep + phin_r)
+    Rn_l = 2 * np.sqrt(kb * gammar * Teff_list_l * deltaomega / (np.pi * m[0])) * np.cos(omegan * dt * tstep + phin_l)
+    Rn_r = 2 * np.sqrt(kb * gammar * Teff_list_r * deltaomega / (np.pi * m[-1])) * np.cos(omegan * dt * tstep + phin_r)
     fluctuation[0] = np.sum(Rn_l)
     fluctuation[-1] = np.sum(Rn_r)
 
     return fluctuation
 
 
-def vv_update(xprev, vprev, acc_determine_prev, m, K, dt, xil, xir,tstep):
+def vv_update(xprev, vprev, acc_determine_prev, m, K, dt, xil, xir,tstep, phin_l, phin_r, Teff_list_l,
+        Teff_list_r):
     x = xprev + vprev * dt + 0.5 * acc_determine_prev * dt ** 2
     a_determine_new = accel_determine_update(x, m, K, dt)
     a_damp = accel_damp_update(vprev)
-    a_fluct = accel_fluct_update(m, dt, xil, xir, tstep)
+    a_fluct = accel_fluct_update(m, dt, xil, xir, tstep, phin_l, phin_r, Teff_list_l,
+        Teff_list_r)
     v = vprev + 0.5 * (acc_determine_prev + a_determine_new) * dt \
         + a_damp * dt + a_fluct * dt
     return x, v, a_determine_new
 
 
-def heat_update(vprev, vnow, m, dt, xil, xir):
+# def heat_update(vprev, vnow, m, dt, xil, xir):
+#     aver_vleft = 0.5 * (vprev[0] + vnow[0])
+#     aver_vright = 0.5 * (vprev[-1] + vnow[-1])
+#     ql = -gammal * m[0] *vprev[0] * aver_vleft  \
+#         + np.sqrt(2 * kb * templ * gammal * m[0] / dt) * xil * aver_vleft
+#     qr = -gammar * m[-1] * vprev[-1] * aver_vright  \
+#         + np.sqrt(2 * kb * tempr * gammar * m[-1] / dt) * xir * aver_vright
+#     return ql, qr
+
+
+def heat_update(vprev, vnow, dt, fluct):
     aver_vleft = 0.5 * (vprev[0] + vnow[0])
     aver_vright = 0.5 * (vprev[-1] + vnow[-1])
     ql = -gammal * m[0] *vprev[0] * aver_vleft  \
-        + np.sqrt(2 * kb * templ * gammal * m[0] / dt) * xil * aver_vleft
+        + fluct[0] * aver_vleft / np.sqrt(dt)
     qr = -gammar * m[-1] * vprev[-1] * aver_vright  \
-        + np.sqrt(2 * kb * tempr * gammar * m[-1] / dt) * xir * aver_vright
+        + fluct[-1] * aver_vright / np.sqrt(dt)
     return ql, qr
 
 
@@ -90,6 +103,15 @@ def potential_update(m, x, omega):
 
 
 def single_trajectory(n):
+
+    np.random.seed(n)
+    phin_l = np.pi * np.random.randn(Nslice)
+    Teff_list_l = (omegan*hbar/kb) / (np.exp(omegan*hbar /(templ*kb)) - 1)
+    # Teff_list_l = templ
+    phin_r = np.pi * np.random.randn(Nslice)
+    Teff_list_r = (omegan*hbar/kb) / (np.exp(omegan*hbar /(tempr*kb)) - 1)
+    # Teff_list_r = tempr
+
     x_t = np.zeros((1,N))
     v_t = np.zeros((1,N))
     t_dis = np.array([])
@@ -125,11 +147,15 @@ def single_trajectory(n):
         x_n_old = x_n_new
         v_n_old = v_n_new
         a_n_old = a_n_new
+        # x_n_new, v_n_new, a_n_new = (vv_update(x_n_old,v_n_old, a_n_old, mass,
+        #                                         force_constants, deltat,xil, xir,tstep))
         x_n_new, v_n_new, a_n_new = (vv_update(x_n_old,v_n_old, a_n_old, mass,
-                                                force_constants, deltat,xil, xir,tstep))
+                                                force_constants, deltat,xil, xir,tstep, phin_l, phin_r, Teff_list_l, Teff_list_r))
 
         if tstep > half_tsize:
-            powerLtemp, powerRtemp = heat_update(v_n_old, v_n_new, mass, deltat, xil, xir)
+            fluct = accel_fluct_update(mass, dt, xil, xir, tstep, phin_l, phin_r, Teff_list_l,
+        Teff_list_r)
+            powerLtemp, powerRtemp = heat_update(v_n_old, v_n_new, deltat, fluct)
             powerL += powerLtemp
             powerR += powerRtemp
             power12 += heat_inter_update(x_n_new, force_constants, v_n_new)[1]
@@ -144,8 +170,9 @@ def single_trajectory(n):
 
 if __name__ == '__main__':
 
-    traj = 24
-    SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
+    traj = 100
+    # SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
+    SLOTS = int(os.getenv('OMP_NUM_THREADS')) # This for PBS companying with openmpi specification
     start_time = time.time()
 
     N = 2
@@ -160,8 +187,9 @@ if __name__ == '__main__':
     # differently as well if using this unit
 
     kb = 0.008314 # for kj/(mol K) [GROMACS]
-    templ = 300
-    tempr = 350
+    hbar = 0.06347
+    templ = 3000
+    tempr = 3050
     gammal = 1.0
     gammar = 1.0
     # Teff = 1.
@@ -181,10 +209,10 @@ if __name__ == '__main__':
     deltaomega = omegaN / Nslice
     omegan = np.arange(1e-10, omegaN, deltaomega)
     # omegan = np.linspace(1e-15, omegaN, Nslice)
-    phin_l = np.pi * np.random.randn(Nslice)
-    Teff_list_l = omegan / (np.exp(omegan /  templ) - 1)
-    phin_r = np.pi * np.random.randn(Nslice)
-    Teff_list_r = omegan / (np.exp(omegan /  tempr) - 1)
+    # phin_l = np.pi * np.random.randn(Nslice)
+    # Teff_list_l = (omegan*hbar/kb) / (np.exp(omegan*hbar /(templ*kb)) - 1)
+    # phin_r = np.pi * np.random.randn(Nslice)
+    # Teff_list_r = (omegan*hbar/kb) / (np.exp(omegan*hbar /(tempr*kb)) - 1)
 
 
     Kintraj = np.zeros(traj)
@@ -217,8 +245,8 @@ if __name__ == '__main__':
         # np.savetxt(filename, x_t)
         # filename = './atom_number' + str(N) + '/' + 'velocity-' + str(i) + '.txt'
         # np.savetxt(filename, v_t)
-
         i += 1
+
 
     # ##--only when necessary to investigate the trajectories
     # filename = './atom_number' + str(N) + '/' + 'time_points' + str(i) + '.txt'
