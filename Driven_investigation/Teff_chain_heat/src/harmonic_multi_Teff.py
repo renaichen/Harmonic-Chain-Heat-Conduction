@@ -36,8 +36,8 @@ def accel_damp_update(v):
 
 def accel_fluct_update(m, dt, xil, xir,tstep):
     fluctuation = np.zeros(len(m))
-    Rn_l = 2 * np.sqrt(gammar * Teff_list_l * deltaomega / np.pi) * np.cos(omegan * dt * tstep + phin_l)
-    Rn_r = 2 * np.sqrt(gammar * Teff_list_r * deltaomega / np.pi) * np.cos(omegan * dt * tstep + phin_r)
+    Rn_l = 2 * np.sqrt(kb * gammal * Teff_list_l * deltaomega / (np.pi * m[0])) * np.cos(omegan * dt * tstep + phin_l)
+    Rn_r = 2 * np.sqrt(kb * gammar * Teff_list_r * deltaomega / (np.pi * m[-1])) * np.cos(omegan * dt * tstep + phin_r)
     fluctuation[0] = np.sum(Rn_l)
     fluctuation[-1] = np.sum(Rn_r)
 
@@ -160,6 +160,7 @@ if __name__ == '__main__':
     # differently as well if using this unit
 
     kb = 0.008314 # for kj/(mol K) [GROMACS]
+    hbar = 0.06347 # for kJ ps/mol
     templ = 300
     tempr = 350
     gammal = 1.0
@@ -167,14 +168,14 @@ if __name__ == '__main__':
     # Teff = 1.
     # Teff = (templ + tempr) / 2.
     Teff = (templ * gammal + tempr * gammar) / (gammal + gammar)
-    tEnd = 1e3
+    tEnd = 1e1
     deltat = 0.001
     t_array = np.arange(0, tEnd, deltat)
     sample_interval = 1000
     t_size = t_array.size
     half_tsize = int(t_size // 2)
     
-    Nslice = int(5e4)
+    Nslice = int(1e4)
     ## 2pi * 150 (rad/ps) is about 5000cm^-1, we might just want to take 2pi *
     ## 100, which is about 3342cm^-1. But taking 10^4 slices could be better
     omegaN = 2 * np.pi * 100
@@ -182,9 +183,9 @@ if __name__ == '__main__':
     omegan = np.arange(1e-10, omegaN, deltaomega)
     # omegan = np.linspace(1e-15, omegaN, Nslice)
     phin_l = np.pi * np.random.randn(Nslice)
-    Teff_list_l = omegan / (np.exp(omegan /  templ) - 1)
+    Teff_list_l = (omegan*hbar/kb) / (np.exp(omegan*hbar /(templ*kb)) - 1)
     phin_r = np.pi * np.random.randn(Nslice)
-    Teff_list_r = omegan / (np.exp(omegan /  tempr) - 1)
+    Teff_list_r = (omegan*hbar/kb) / (np.exp(omegan*hbar /(tempr*kb)) - 1)
 
 
     Kintraj = np.zeros(traj)
