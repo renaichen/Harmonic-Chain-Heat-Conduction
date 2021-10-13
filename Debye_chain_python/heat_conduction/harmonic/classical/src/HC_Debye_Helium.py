@@ -32,8 +32,6 @@ def single_trajectory(n):
     a0new = a1new = a2new = 0
     La1old = La1new = La2old = La2new = 0
 
-    K0 = np.array([[0, 0.5 * v0old ** 2]])
-    U0 = np.array([[0, 0.5 * k0 * x0old ** 2]])
     J01_total = LJ01_total = 0
     j01_inter = np.array([[0, 0]])
     Lj01_inter = np.array([[0, 0]])
@@ -66,10 +64,6 @@ def single_trajectory(n):
         v2new = v2old + 0.5 * (a2old + a2new) * dt - gammaR * v2old * dt + np.sqrt(2 * gammaR * kB * TR * dt) * xiR
         Lv1new = Lv1old + 0.5 * (La1old + La1new) * dt
         Lv2new = Lv2old + 0.5 * (La2old + La2new) * dt - gammaL * Lv2old * dt + np.sqrt(2 * gammaL * kB * TL * dt) * xiL
-
-        # if tstep > 0 and tstep % 1000 == 0:
-        #     K0 = np.append(K0, [[tstep * dt, 0.5 * v0new ** 2]], axis=0)
-        #     U0 = np.append(U0, [[tstep * dt, 0.5 * k0 * x0new ** 2]], axis=0)
 
         if tstep > (t_size // 2):
             j01inter = 0.5 * F01new * (v0new + v1new)
@@ -118,7 +112,7 @@ if __name__ == "__main__":
     Lk01 = 0.002
 
     t_start = 0
-    t_end = 5e3
+    t_end = 5e4
     dt = 1e-2
     # dt = 1 / (np.pi * 100 * omegaD)
     t_array = np.arange(t_start, t_end, dt)
@@ -136,9 +130,6 @@ if __name__ == "__main__":
     # p = Pool(processes=SLOTS)# pass the number of core to the Pool so that I know how many cores I can use.
     p = Pool(processes=2)# pass the number of core to the Pool so that I know how many cores I can use.
     i = 0
-    # for Kin, Pot in p.map(single_trajectory, range(traj)):
-    #     Kin0traj += Kin
-    #     Pot0traj += Pot
     for J01, LJ01, j01, Lj01 in p.map(single_trajectory, range(traj)):
         J01traj += J01
         LJ01traj += LJ01
@@ -149,20 +140,18 @@ if __name__ == "__main__":
     p.join()
     
 
-    # Kin0traj /= traj
-    # Pot0traj /= traj
     J01traj /= traj
     LJ01traj /= traj
     j01traj /= traj
     Lj01traj /= traj
 
-    np.savetxt("hc_T" + str(TR) + ".txt", np.c_[j01traj[:,0],j01traj[:,1], Lj01traj[:,1]])
+    np.savetxt("hc_T" + str(TR) + ".txt", np.c_[j01traj[1:,0],j01traj[1:,1], Lj01traj[1:,1]])
 
     print("left and rigth currents are: ", LJ01traj, J01traj, "for T = ", TR)
     print("time used: ", (time.time() - start) / 60)
 
-    plt.plot(j01traj)
-    plt.plot(Lj01traj)
+    plt.plot(j01traj[1:,0], j01traj[1:,1])
+    plt.plot(Lj01traj[1:,0],Lj01traj[1:,1])
     plt.savefig("currents_T" + str(TR) + ".pdf")
 
 
