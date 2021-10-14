@@ -36,41 +36,38 @@ def single_trajectory(n):
     j01_inter = np.array([[0, 0]])
     Lj01_inter = np.array([[0, 0]])
 
-    phinL = np.pi * np.random.randn(Nslice)
-    phinR = np.pi * np.random.randn(Nslice)
-
     while tstep < t_size:
-        RnL = 2 * np.sqrt(gammaL * Teff_listL *deltaomega / np.pi) * np.cos(omegan * dt *tstep + phinL)
-        RnR = 2 * np.sqrt(gammaR * Teff_listR *deltaomega / np.pi) * np.cos(omegan * dt *tstep + phinR)
+        xiL = random.gauss(0, 1)
+        xiR = random.gauss(0, 1)
 
-        F01old = - k01 * (x0old - x1old)
-        LF01old = - Lk01 * (x0old - Lx1old)
-        a0old = - k0 * x0old + F01old + LF01old
-        a1old = - k1 * (x1old - x2old) - F01old
+        LFmorseold = 2 * alphaL * DL * np.exp(-alphaL * (Lx1old - x0old)) * (np.exp(-alphaL * (Lx1old - x0old)) - 1)
+        Fmorseold = 2 * alphaR * DR * np.exp(-alphaR * (x1old - x0old)) * (np.exp(-alphaR * (x1old - x0old)) - 1)
+        a0old = - k0 * x0old + Fmorseold + LFmorseold
+        a1old = - k1 * (x1old - x2old) - Fmorseold
         a2old = - k1 * (x2old - x1old) - k2 * x2old
-        La1old = - Lk1 * (Lx1old - Lx2old) - LF01old
+        La1old = - Lk1 * (Lx1old - Lx2old) - LFmorseold
         La2old = - Lk1 * (Lx2old - Lx1old) - Lk2 * Lx2old
         x0new = x0old + v0old * dt + 0.5 * a0old * dt ** 2
         x1new = x1old + v1old * dt + 0.5 * a1old * dt ** 2
         x2new = x2old + v2old * dt + 0.5 * a2old * dt ** 2
         Lx1new = Lx1old + Lv1old * dt + 0.5 * La1old * dt ** 2
         Lx2new = Lx2old + Lv2old * dt + 0.5 * La2old * dt ** 2
-        F01new = - k01 * (x0new - x1new)
-        LF01new = - Lk01 * (x0new - Lx1new)
-        a0new = -k0 * x0new + F01new + LF01new
-        a1new = - k1 * (x1new - x2new) - F01new
+        LFmorsenew = 2 * alphaL * DL * np.exp(-alphaL * (Lx1new - x0new)) * (np.exp(-alphaL * (Lx1new - x0new)) - 1)
+        Fmorsenew = 2 * alphaR * DR * np.exp(-alphaR * (x1new - x0new)) * (np.exp(-alphaR * (x1new - x0new)) - 1)
+        a0new = -k0 * x0new + Fmorsenew + LFmorsenew
+        a1new = - k1 * (x1new - x2new) - Fmorsenew
         a2new = - k1 * (x2new - x1new) - k2 * x2new
-        La1new = - Lk1 * (Lx1new - Lx2new) - LF01new
+        La1new = - Lk1 * (Lx1new - Lx2new) - LFmorsenew
         La2new = - Lk1 * (Lx2new - Lx1new) - Lk2 * Lx2new
         v0new = v0old + 0.5 * (a0old + a0new) * dt
         v1new = v1old + 0.5 * (a1old + a1new) * dt
-        v2new = v2old + 0.5 * (a2old + a2new) * dt - gammaR * v2old * dt + np.sum(RnR) * dt
+        v2new = v2old + 0.5 * (a2old + a2new) * dt - gammaR * v2old * dt + np.sqrt(2 * gammaR * kB * TR * dt) * xiR
         Lv1new = Lv1old + 0.5 * (La1old + La1new) * dt
-        Lv2new = Lv2old + 0.5 * (La2old + La2new) * dt - gammaL * Lv2old * dt + np.sum(RnL) * dt
+        Lv2new = Lv2old + 0.5 * (La2old + La2new) * dt - gammaL * Lv2old * dt + np.sqrt(2 * gammaL * kB * TL * dt) * xiL
 
         if tstep > (t_size // 2):
-            j01inter = 0.5 * F01new * (v0new + v1new)
-            Lj01inter = 0.5 * LF01new * (v0new + Lv1new)
+            j01inter = 0.5 * Fmorsenew * (v0new + v1new)
+            Lj01inter = 0.5 * LFmorsenew * (v0new + Lv1new)
             J01_total += j01inter
             LJ01_total += Lj01inter
             if tstep % 1000 == 0:
@@ -108,26 +105,23 @@ if __name__ == "__main__":
     # gamma = 0.
     omegaD = (k1**2*k2**2)**(1/8)
     kB = 1
-    TL = 0.1
+    TL = 0.01
     # TR = float(sys.argv[1])
-    TR = 0.5
-    k01 = 0.002
-    Lk01 = 0.002
+    TR = 0.05
+    # k01 = 0.002
+    # Lk01 = 0.002
+    alphaL = 0.1 
+    DL = 0.1 # 2*alpha^2*D=0.002
+    alphaR = 0.1 
+    DR = 0.1 # 2*alpha^2*D=0.002
 
     t_start = 0
-    t_end = 5e2
+    t_end = 5e3
     dt = 1e-2
     # dt = 1 / (np.pi * 100 * omegaD)
     t_array = np.arange(t_start, t_end, dt)
 
     t_size = len(t_array)
-
-    omegaN = 100 * omegaD
-    Nslice = int(5e4)
-    deltaomega = omegaN / Nslice
-    omegan = np.linspace(1e-5, omegaN, Nslice)
-    Teff_listL = omegan / (np.exp(omegan / TL) -1)
-    Teff_listR = omegan / (np.exp(omegan / TR) -1)
 
     traj = 48
 

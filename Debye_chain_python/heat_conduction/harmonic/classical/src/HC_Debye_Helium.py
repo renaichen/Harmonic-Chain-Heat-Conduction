@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    # SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
+    SLOTS = int(os.getenv('NSLOTS')) # Get the NSLOTS environment variable provided by the scheduler
 
     k0 = 0.1
     k1 = Lk1 = 0.151388
@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     t_size = len(t_array)
 
-    traj = 2
+    traj = 48
 
     Kin0traj = np.zeros((t_size // 1000, 2))
     Pot0traj = np.zeros((t_size // 1000, 2))
@@ -127,8 +127,7 @@ if __name__ == "__main__":
     j01traj = np.zeros((t_size // 2000, 2)) # 2000 means half tsize
     Lj01traj = np.zeros((t_size // 2000, 2)) # 2000 means half tsize
 
-    # p = Pool(processes=SLOTS)# pass the number of core to the Pool so that I know how many cores I can use.
-    p = Pool(processes=2)# pass the number of core to the Pool so that I know how many cores I can use.
+    p = Pool(processes=SLOTS)# pass the number of core to the Pool so that I know how many cores I can use.
     i = 0
     for J01, LJ01, j01, Lj01 in p.map(single_trajectory, range(traj)):
         J01traj += J01
